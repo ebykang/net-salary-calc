@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Monthly Net Salary Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .calculator-container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+        }
+        .calculator-container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .calculator-container input, .calculator-container button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .calculator-container button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .calculator-container button#resetButton {
+            background-color: #6c757d;
+        }
+        .calculator-container table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            border: 1px solid black;
+        }
+        .calculator-container th, .calculator-container td {
+            padding: 10px;
+            text-align: right;
+            border: 1px solid black;
+        }
+        .calculator-container th {
+            background-color: #f7f7f7;
+        }
+        .highlight {
+            background-color: #ffff99; /* Light yellow for highlight */
+        }
+        .result {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .tables-section {
+            margin-top: 40px;
+            font-size: 0.9em; /* Smaller font size for tables */
+        }
+        .tables-section h2 {
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        .tables-section table {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-container">
+    <h1>Monthly Net Salary Calculator</h1>
+    <label for="baseSalary">Enter your Base Salary (PHP):</label>
+    <input type="number" id="baseSalary" placeholder="Enter base salary" onkeydown="if(event.key === 'Enter'){ calculateNetSalary(); }">
+    <button onclick="calculateNetSalary()">Calculate Net Salary</button>
+    <button id="resetButton" onclick="resetPage()">Reset</button>
+    <div id="result" class="result"></div>
+    <table id="deductionTable" style="display:none;">
+        <thead>
+            <tr>
+                <th>Deduction</th>
+                <th>Amount (PHP)</th>
+            </tr>
+        </thead>
+        <tbody id="deductionBody"></tbody>
+        <tfoot>
+            <tr>
+                <th>Total Deductions</th>
+                <th id="totalDeductions"></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div class="tables-section">
+    <h2>BIR Monthly Tax Table</h2>
+    <table id="taxTable">
+        <thead>
+            <tr>
+                <th>Monthly Income (PHP)</th>
+                <th>Tax Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Up to 20,833</td><td>0%</td></tr>
+            <tr><td>20,834 - 33,333</td><td>20% of the excess over 20,833</td></tr>
+            <tr><td>33,334 - 66,667</td><td>PHP 2,500 + 25% of the excess over 33,333</td></tr>
+            <tr><td>66,668 - 166,667</td><td>PHP 10,833 + 30% of the excess over 66,667</td></tr>
+            <tr><td>166,668 - 666,667</td><td>PHP 40,833 + 32% of the excess over 166,667</td></tr>
+            <tr><td>Over 666,667</td><td>PHP 200,833 + 35% of the excess over 666,667</td></tr>
+        </tbody>
+    </table>
+
+    <h2>SSS Contribution Table</h2>
+    <table id="sssTable">
+        <thead>
+            <tr>
+                <th>Monthly Salary Credit (PHP)</th>
+                <th>Employee Contribution (PHP)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Up to 3,250</td><td>135</td></tr>
+            <tr><td>3,250.01 - 24,750</td><td>135 - 900</td></tr>
+            <tr><td>24,750.01 - 25,000</td><td>900</td></tr>
+        </tbody>
+    </table>
+
+    <h2>PhilHealth Contribution Table</h2>
+    <table id="philhealthTable">
+        <thead>
+            <tr>
+                <th>Monthly Basic Salary (PHP)</th>
+                <th>Employee Contribution (PHP)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Up to 10,000</td><td>150</td></tr>
+            <tr><td>10,000.01 - 39,999.99</td><td>150 - 600</td></tr>
+            <tr><td>40,000 and above</td><td>600</td></tr>
+        </tbody>
+    </table>
+
+    <h2>Pag-IBIG Contribution Table</h2>
+    <table id="pagibigTable">
+        <thead>
+            <tr>
+                <th>Monthly Salary (PHP)</th>
+                <th>Employee Contribution (PHP)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Up to 1,500</td><td>1% of basic salary</td></tr>
+            <tr><td>Over 1,500</td><td>2% of basic salary</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function calculateNetSalary() {
+        // Get base salary from input
+        const baseSalary = parseFloat(document.getElementById('baseSalary').value);
+        let taxDeduction = 0;
+
+        // Tax calculation based on BIR tax table (Monthly)
+        if (baseSalary <= 20833) {
+            taxDeduction = 0;
+        } else if (baseSalary <= 33333) {
+            taxDeduction = (baseSalary - 20833) * 0.20;
+        } else if (baseSalary <= 66667) {
+            taxDeduction = 2500 + (baseSalary - 33333) * 0.25;
+        } else if (baseSalary <= 166667) {
+            taxDeduction = 10833 + (baseSalary - 66667) * 0.30;
+        } else if (baseSalary <= 666667) {
+            taxDeduction = 40833 + (baseSalary - 166667) * 0.32;
+        } else {
+            taxDeduction = 200833 + (baseSalary - 666667) * 0.35;
+        }
+
+        // Example fixed deductions based on tables
+        const sssDeduction = baseSalary <= 3250 ? 135 :
+                            (baseSalary > 3250 && baseSalary <= 24750) ? 900 : 900;
+        const philhealthDeduction = baseSalary <= 10000 ? 150 :
+                                    (baseSalary > 10000 && baseSalary < 40000) ? (baseSalary * 0.015) / 2 : 600;
+        const pagibigDeduction = baseSalary <= 1500 ? baseSalary * 0.01 : baseSalary * 0.02;
+
+        // Calculate total deductions
+        const totalDeductions = taxDeduction + sssDeduction + philhealthDeduction + pagibigDeduction;
+
+        // Calculate net salary
+        const netSalary = baseSalary - totalDeductions;
+
+        // Display result
+        document.getElementById('result').innerHTML = `Your Net Salary is PHP ${netSalary.toFixed(2)}`;
+
+        // Fill in the deductions table
+        const deductionBody = document.getElementById('deductionBody');
+        deductionBody.innerHTML = `
+            <tr><td>Income Tax</td><td>${taxDeduction.toFixed(2)}</td></tr>
+            <tr><td>SSS</td><td>${sssDeduction.toFixed(2)}</td></tr>
+            <tr><td>PhilHealth</td><td>${philhealthDeduction.toFixed(2)}</td></tr>
+            <tr><td>Pag-IBIG</td><td>${pagibigDeduction.toFixed(2)}</td></tr>
+        `;
+        document.getElementById('totalDeductions').innerText = totalDeductions.toFixed(2);
+
+        // Display the deductions table
+        document.getElementById('deductionTable').style.display = 'table';
+
+        // Highlight the appropriate rows in the tables below based on the base salary
+        highlightRow('taxTable', baseSalary, [20833, 33333, 66667, 166667, 666667]);
+        highlightRow('sssTable', baseSalary, [3250, 24750, 25000]);
+        highlightRow('philhealthTable', baseSalary, [10000, 40000]);
+        highlightRow('pagibigTable', baseSalary, [1500]);
+    }
+
+    function highlightRow(tableId, baseSalary, thresholds) {
+        const table = document.getElementById(tableId);
+        const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        let thresholdIndex = 0;
+        for (let i = 0; i < rows.length; i++) {
+            const minThreshold = thresholdIndex === 0 ? 0 : thresholds[thresholdIndex - 1];
+            const maxThreshold = thresholds[thresholdIndex];
+            if (baseSalary > minThreshold && baseSalary <= maxThreshold) {
+                rows[i].classList.add('highlight');
+                break;
+            }
+            thresholdIndex++;
+        }
+    }
+
+    function resetPage() {
+        location.reload();
+    }
+</script>
+
+</body>
+</html>
